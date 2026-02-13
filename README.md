@@ -10,11 +10,11 @@ This repository contains load testing scenarios built with [k6](https://k6.io/),
 
 ```
 k6-load-testing/
-├── business-abilities-load/    # Load tests for business abilities GraphQL API
+├── <test-directory>/            # Individual load test scenarios
 │   ├── index.ts                 # Main k6 test script
 │   ├── run-load-test.sh         # Convenience script to run tests
-│   ├── README.md                # Detailed test documentation
-│   └── RATE_LIMIT_CONFIG.md     # Rate limit configuration guide
+│   ├── README.md                # Test-specific documentation
+│   └── ...                      # Additional configuration files
 └── README.md                    # This file
 ```
 
@@ -40,23 +40,19 @@ k6-load-testing/
 Navigate to the specific test directory and follow its README for detailed instructions:
 
 ```bash
-cd business-abilities-load
+cd <test-directory>
 ./run-load-test.sh
 ```
 
 ## Test Directories
 
-### business-abilities-load
+Each test directory contains a specific load testing scenario. Navigate to individual test directories and review their README files for detailed documentation on:
 
-Load tests for GraphQL API endpoints, specifically testing the `business.abilities` query under sustained load.
-
-**Key features:**
-- Respects API rate limits (40 req/s target)
-- Constant arrival rate for predictable load
-- Real-time rate limit monitoring
-- Comprehensive performance thresholds
-
-See [business-abilities-load/README.md](./business-abilities-load/README.md) for complete documentation.
+- Test objectives and target endpoints
+- Configuration requirements
+- Rate limiting considerations
+- Performance thresholds
+- Expected results
 
 ## Best Practices
 
