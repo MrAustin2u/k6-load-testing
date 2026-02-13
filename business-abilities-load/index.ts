@@ -5,32 +5,42 @@ import { Rate } from "k6/metrics";
 // Custom metrics
 const errorRate = new Rate("errors");
 
-// API Rate Limit Configuration
-// From config/config.exs: cap: 10,000 points, per_second: 50 points This means the API can handle ~50 requests/second sustained
-// To stay safely under the limit, we'll target ~40 requests/second max
-const RATE_LIMIT_PER_SECOND = 50; // API limit
-const TARGET_REQUESTS_PER_SECOND = 40; // Our target (80% of limit for safety)
-
 // Test configuration
-export const options = {
-  // Use a constant arrival rate to stay under the rate limit
-  // This ensures we don't exceed TARGET_REQUESTS_PER_SECOND regardless of response times
-  scenarios: {
-    constant_rate: {
-      executor: "constant-arrival-rate",
-      rate: TARGET_REQUESTS_PER_SECOND, // iterations per second
-      timeUnit: "1s",
-      duration: "10m", // Run at constant rate for 10 minutes
-      preAllocatedVUs: 50, // Pre-allocate VUs for performance
-      maxVUs: 100, // Maximum VUs to scale up to if needed
-    },
+interface K6Options {
+  tags: {
+    name: string;
+  };
+  stages: Array<{
+    duration: string;
+    target: number;
+  }>;
+  thresholds: {
+    http_req_duration: string[];
+    http_req_failed: string[];
+    errors: string[];
+  };
+  setupTimeout: string;
+}
+
+export const options: K6Options = {
+  tags: {
+    name: "BusinessAbilitiesLoadTest",
   },
+  stages: [
+    { duration: "30s", target: 100 }, // Warm-up phase
+    { duration: "1m", target: 1000 }, // Ramp-up
+    { duration: "3m", target: 5000 }, // Sustained load
+    { duration: "2m", target: 8000 }, // Increased load
+    { duration: "1m", target: 10000 }, // Peak load to test system limits
+    { duration: "1m", target: 5000 }, // Ramp-down
+    { duration: "30s", target: 0 }, // Cool-down
+  ],
   thresholds: {
     http_req_duration: ["p(95)<2000"], // 95% of requests should be below 2s
-    http_req_failed: ["rate<0.05"], // Error rate should be less than 5%
-    errors: ["rate<0.05"], // Custom error rate should be less than 5%
-    iteration_duration: ["p(95)<3000"], // Iterations should complete within 3s
+    http_req_failed: ["rate<0.01"], // Error rate should be less than 1%
+    errors: ["rate<0.01"], // Custom error rate should be less than 1%
   },
+  setupTimeout: "5m", // 5 minutes timeout for setup
 };
 
 // GraphQL query to test
@@ -126,22 +136,17 @@ export default function () {
     }
   }
 
-  // No sleep needed - the constant-arrival-rate executor handles pacing
-  // to maintain exactly TARGET_REQUESTS_PER_SECOND
+  // Small sleep between iterations to prevent overwhelming the system
+  sleep(1);
 }
 
-// Setup function - runs once per VU at the start
+// Setup function - runs once at the start
 export function setup() {
   console.log("Starting load test...");
   console.log(`Base URL: ${BASE_URL}`);
-  console.log(`API Rate Limit: ${RATE_LIMIT_PER_SECOND} requests/second`);
-  console.log(
-    `Target Rate: ${TARGET_REQUESTS_PER_SECOND} requests/second (${(TARGET_REQUESTS_PER_SECOND / RATE_LIMIT_PER_SECOND) * 100}% of limit)`,
-  );
-  console.log(`Duration: 10 minutes`);
-  console.log(
-    `Total Expected Requests: ${TARGET_REQUESTS_PER_SECOND * 60 * 10} requests`,
-  );
+  console.log(`Test: ${options.tags.name}`);
+  console.log(`Stages: ${options.stages.length} stages over ~9 minutes`);
+  console.log(`Peak VUs: 10,000`);
 
   // Verify authentication is configured
   if (!AUTH_TOKEN) {
