@@ -1,0 +1,10 @@
+# Environment files with secrets
+.env
+
+# k6 output files
+*.json
+*.html
+*.csv
+
+# Logs
+*.log
