@@ -10,11 +10,12 @@ This repository contains load testing scenarios built with [k6](https://k6.io/),
 
 ```
 k6-load-testing/
-├── <test-directory>/            # Individual load test scenarios
+├── business-abilities-load/     # Business abilities load test scenario
 │   ├── index.ts                 # Main k6 test script
 │   ├── run-load-test.sh         # Convenience script to run tests
 │   ├── README.md                # Test-specific documentation
-│   └── ...                      # Additional configuration files
+│   ├── .env.example             # Environment configuration template
+│   └── RATE_LIMIT_CONFIG.md     # Rate limiting documentation
 └── README.md                    # This file
 ```
 
